@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vault.Network | Dashboard</title>
+    <title>Network Vault | Secure Access</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -11,42 +11,46 @@
         .glass { background: rgba(20, 20, 20, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
         .input-dark { background: #121212; border: 1px solid #2a2a2a; color: white; padding: 12px; border-radius: 8px; width: 100%; outline: none; }
         .input-dark:focus { border-color: #3b82f6; }
-        .btn-primary { background: #2563eb; transition: 0.3s; }
-        .btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); }
     </style>
 </head>
 <body class="min-h-screen">
 
-    <div id="toast" class="fixed top-5 right-5 hidden bg-blue-600 text-white px-6 py-3 rounded-xl shadow-2xl z-[100] animate-bounce"></div>
+    <div id="toast" class="fixed top-5 right-5 hidden px-6 py-3 rounded-xl shadow-2xl z-[100] transition-all"></div>
 
-    <div id="login-section" class="flex items-center justify-center min-h-screen">
-        <div class="glass p-10 rounded-3xl w-full max-w-md shadow-2xl">
-            <h2 class="text-3xl font-black mb-2 text-white">Login</h2>
-            <p class="text-gray-400 mb-8">Access your network dashboard</p>
-            <input type="email" id="l-email" placeholder="Email Address" class="input-dark mb-4">
-            <input type="password" id="l-pass" placeholder="Password" class="input-dark mb-6">
-            <button onclick="login()" class="w-full btn-primary p-4 rounded-xl font-bold">Sign In</button>
+    <div id="login-section" class="flex items-center justify-center min-h-screen p-4">
+        <div class="glass p-8 md:p-10 rounded-3xl w-full max-w-md shadow-2xl">
+            <h2 class="text-3xl font-black mb-2">Network Login</h2>
+            <p class="text-gray-400 mb-8 text-sm">Enter credentials saved in database</p>
+            
+            <div class="space-y-4">
+                <input type="email" id="l-email" placeholder="Email Address" class="input-dark">
+                
+                <div class="relative">
+                    <input type="password" id="l-pass" placeholder="Password" class="input-dark">
+                    <button onclick="togglePass('l-pass')" class="absolute right-3 top-3 text-xs text-blue-500 font-bold uppercase">Show</button>
+                </div>
+
+                <button onclick="login()" class="w-full bg-blue-600 hover:bg-blue-700 p-4 rounded-xl font-bold mt-4 transition-all active:scale-95">Sign In</button>
+            </div>
         </div>
     </div>
 
     <div id="dashboard" class="hidden p-6 max-w-7xl mx-auto">
-        <header class="flex justify-between items-center mb-10">
+        <header class="flex justify-between items-center mb-10 border-b border-white/5 pb-6">
             <div>
-                <h1 class="text-2xl font-bold">Hello, <span id="user-name" class="text-blue-500"></span></h1>
-                <p class="text-sm text-gray-500">ID: <span id="user-id-display"></span></p>
+                <h1 class="text-2xl font-bold">Welcome, <span id="user-name" class="text-blue-500"></span></h1>
+                <p class="text-xs text-gray-500">Member ID: <span id="user-id-display" class="font-mono"></span></p>
             </div>
-            <button onclick="logout()" class="bg-red-500/10 text-red-500 border border-red-500/30 px-6 py-2 rounded-full hover:bg-red-500 hover:text-white transition">Logout</button>
+            <button onclick="location.reload()" class="bg-red-500/10 text-red-500 border border-red-500/30 px-5 py-2 rounded-full hover:bg-red-500 hover:text-white transition">Logout</button>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div class="lg:col-span-4 glass p-6 rounded-2xl h-fit">
-                <h3 class="text-lg font-bold mb-6 border-b border-white/10 pb-2">Add New Member</h3>
-                <div class="space-y-4">
+                <h3 class="text-lg font-bold mb-6">Register New Downline</h3>
+                <div class="space-y-3">
                     <input type="text" id="f-name" placeholder="Full Name" class="input-dark">
-                    <div class="grid grid-cols-2 gap-2">
-                        <input type="email" id="f-email" placeholder="Email" class="input-dark">
-                        <input type="text" id="f-pass" placeholder="Password" class="input-dark">
-                    </div>
+                    <input type="email" id="f-email" placeholder="Email" class="input-dark">
+                    <input type="text" id="f-pass" placeholder="Set Password" class="input-dark">
                     <input type="text" id="f-phone" placeholder="Phone Number" class="input-dark">
                     <input type="text" id="f-assoc" placeholder="Associate ID" class="input-dark">
                     
@@ -58,38 +62,29 @@
                         <option value="World Team">World Team</option>
                         <option value="Active World Team">Active World Team</option>
                         <option value="GET Team">GET Team</option>
-                        <option value="GET 2500 Team">GET 2500 Team</option>
                         <option value="Millionaire Team">Millionaire Team</option>
-                        <option value="Millionaire 7500 Team">Millionaire 7500 Team</option>
                         <option value="President Team">President Team</option>
                     </select>
 
-                    <label class="flex items-center space-x-3 cursor-pointer p-2 rounded-lg hover:bg-white/5">
-                        <input type="checkbox" id="f-biz" class="w-5 h-5 rounded border-gray-700 bg-black">
-                        <span class="text-sm">Sponsor Business ID (Yes/No)</span>
+                    <label class="flex items-center space-x-3 p-3 rounded-lg bg-white/5 cursor-pointer">
+                        <input type="checkbox" id="f-biz" class="w-5 h-5 accent-blue-600">
+                        <span class="text-sm">Has Business ID?</span>
                     </label>
-
-                    <div class="pt-4 border-t border-white/10 mt-4">
-                        <p class="text-xs text-gray-500 mb-2 uppercase tracking-widest font-bold">Optional Verification</p>
-                        <input type="text" id="f-aadhar" placeholder="Aadhar Photo URL" class="input-dark mb-2">
-                        <input type="text" id="f-pan" placeholder="PAN Photo URL" class="input-dark">
-                    </div>
                     
-                    <button onclick="saveMember()" class="w-full bg-green-600 hover:bg-green-700 p-4 rounded-xl font-bold mt-4 shadow-lg shadow-green-900/20">Add to Network</button>
+                    <button onclick="saveMember()" class="w-full bg-green-600 hover:bg-green-700 p-4 rounded-xl font-bold mt-4 transition-all">Create Card</button>
                 </div>
             </div>
 
             <div class="lg:col-span-8">
-                <h3 class="text-xl font-bold mb-6">Downline Network</h3>
-                <div id="cards-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    </div>
+                <h3 class="text-xl font-bold mb-6">Downline Members</h3>
+                <div id="cards-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
         </div>
     </div>
 
-    <div id="modal" class="fixed inset-0 bg-black/90 hidden z-50 flex items-center justify-center p-4">
-        <div class="glass w-full max-w-2xl p-8 rounded-3xl relative">
-            <button onclick="closeModal()" class="absolute top-6 right-6 text-2xl hover:text-red-500 transition">&times;</button>
+    <div id="modal" class="fixed inset-0 bg-black/95 hidden z-50 flex items-center justify-center p-4">
+        <div class="glass w-full max-w-xl p-8 rounded-3xl relative shadow-2xl">
+            <button onclick="closeModal()" class="absolute top-6 right-6 text-2xl">&times;</button>
             <div id="modal-body"></div>
         </div>
     </div>
@@ -97,15 +92,17 @@
     <script>
         const SB_URL = 'https://znelnyiupddbelcsuvns.supabase.co';
         const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpuZWxueWl1cGRkYmVsY3N1dm5zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyMTMxMTgsImV4cCI6MjA5MDc4OTExOH0.aZV36Q-vgT1gy2KY4FFGPNtJ7KMEnroozECxA-gMAOg';
-        const _client = supabase.createClient(SB_URL, SB_KEY);
+        const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
-        let userSession = null;
+        let activeUser = null;
 
+        // Login Function: Tracks user via Email and Password in database
         async function login() {
             const email = document.getElementById('l-email').value;
             const pass = document.getElementById('l-pass').value;
 
-            const { data, error } = await _client
+            // Database se check karna
+            const { data, error } = await _supabase
                 .from('network_members')
                 .select('*')
                 .eq('email', email)
@@ -113,37 +110,73 @@
                 .single();
 
             if (data) {
-                userSession = data;
+                activeUser = data;
                 document.getElementById('login-section').classList.add('hidden');
                 document.getElementById('dashboard').classList.remove('hidden');
                 document.getElementById('user-name').innerText = data.full_name;
                 document.getElementById('user-id-display').innerText = data.associate_id;
-                loadNetwork();
+                notify("Login Successful!", "green");
+                loadCards();
             } else {
-                notify("Invalid Credentials!", "red");
+                notify("Invalid Email or Password!", "red");
             }
         }
 
-        async function loadNetwork() {
-            const { data } = await _client
+        async function loadCards() {
+            // Sirf wahi dikhenge jinka sponsor activeUser ki ID hai
+            const { data } = await _supabase
                 .from('network_members')
                 .select('*')
-                .eq('sponsor_id', userSession.associate_id);
+                .eq('sponsor_id', activeUser.associate_id);
 
             const grid = document.getElementById('cards-grid');
             grid.innerHTML = '';
 
-            data.forEach(member => {
+            data.forEach(m => {
                 const card = document.createElement('div');
-                card.className = "glass p-6 rounded-2xl cursor-pointer hover:border-blue-500/50 transition";
-                card.onclick = () => showDetails(member);
+                card.className = "glass p-6 rounded-2xl cursor-pointer border border-transparent hover:border-blue-500/50 transition-all";
+                card.onclick = () => showMember(m);
                 card.innerHTML = `
-                    <h4 class="text-lg font-bold">${member.full_name}</h4>
-                    <p class="text-blue-400 text-sm font-medium uppercase tracking-tighter">${member.level}</p>
-                    <p class="text-xs text-gray-500 mt-2">ID: ${member.associate_id}</p>
+                    <p class="text-xs text-gray-500 font-mono mb-1">${m.associate_id}</p>
+                    <h4 class="text-lg font-bold">${m.full_name}</h4>
+                    <p class="text-blue-400 text-xs font-bold uppercase mt-2">${m.level}</p>
                 `;
                 grid.appendChild(card);
             });
+        }
+
+        function showMember(m) {
+            const modal = document.getElementById('modal');
+            const body = document.getElementById('modal-body');
+            body.innerHTML = `
+                <p class="text-blue-500 font-bold text-sm mb-2">${m.level}</p>
+                <h2 class="text-3xl font-black mb-8">${m.full_name}</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                    ${row("Email", m.email)}
+                    ${row("Password", m.password)}
+                    ${row("Phone", m.phone_no)}
+                    ${row("Associate ID", m.associate_id)}
+                    ${row("Business ID", m.sponsor_business_id ? "Yes" : "No")}
+                    ${row("Reg. Date", m.registration_date)}
+                </div>
+                <div class="mt-10 flex gap-3">
+                    <button class="bg-blue-600 flex-1 py-3 rounded-xl font-bold">Edit Profile</button>
+                    <button onclick="closeModal()" class="bg-white/5 px-6 py-3 rounded-xl font-bold">Close</button>
+                </div>
+            `;
+            modal.classList.remove('hidden');
+        }
+
+        function row(label, val) {
+            return `
+                <div class="bg-white/5 p-3 rounded-lg group">
+                    <p class="text-[10px] text-gray-500 uppercase tracking-widest">${label}</p>
+                    <div class="flex justify-between items-center">
+                        <span class="font-medium">${val || 'N/A'}</span>
+                        <button onclick="copy('${val}')" class="text-blue-400 text-[10px] underline opacity-0 group-hover:opacity-100 transition">Copy</button>
+                    </div>
+                </div>
+            `;
         }
 
         async function saveMember() {
@@ -155,73 +188,37 @@
                 associate_id: document.getElementById('f-assoc').value,
                 level: document.getElementById('f-level').value,
                 sponsor_business_id: document.getElementById('f-biz').checked,
-                aadhar_photo_url: document.getElementById('f-aadhar').value,
-                pan_photo_url: document.getElementById('f-pan').value,
-                sponsor_id: userSession.associate_id
+                sponsor_id: activeUser.associate_id // Auto assign sponsor
             };
 
-            const { error } = await _client.from('network_members').insert([payload]);
+            const { error } = await _supabase.from('network_members').insert([payload]);
             if (!error) {
-                notify("Member added successfully!");
-                loadNetwork();
-                // Clear fields
-                document.querySelectorAll('.input-dark').forEach(i => i.value = '');
+                notify("Member Saved!");
+                loadCards();
             } else {
-                notify("Error: Associate ID already exists", "red");
+                notify("Error: ID already exists!", "red");
             }
         }
 
-        function showDetails(m) {
-            const modal = document.getElementById('modal');
-            const body = document.getElementById('modal-body');
-            body.innerHTML = `
-                <h2 class="text-3xl font-bold mb-6">${m.full_name}</h2>
-                <div class="grid grid-cols-2 gap-6">
-                    ${detailItem("Email", m.email)}
-                    ${detailItem("Password", m.password)}
-                    ${detailItem("Phone", m.phone_no)}
-                    ${detailItem("Associate ID", m.associate_id)}
-                    ${detailItem("Level", m.level)}
-                    <div>
-                        <p class="text-xs text-gray-500">Business ID</p>
-                        <p class="font-bold">${m.sponsor_business_id ? '✅ Yes' : '❌ No'}</p>
-                    </div>
-                </div>
-                <div class="mt-10 pt-6 border-t border-white/10 flex gap-4">
-                    <button onclick="editMode('${m.id}')" class="bg-blue-500 px-8 py-3 rounded-xl font-bold">Edit Profile</button>
-                    <button onclick="closeModal()" class="bg-white/10 px-8 py-3 rounded-xl font-bold">Close</button>
-                </div>
-            `;
-            modal.classList.remove('hidden');
+        function togglePass(id) {
+            const el = document.getElementById(id);
+            el.type = el.type === 'password' ? 'text' : 'password';
         }
 
-        function detailItem(label, val) {
-            return `
-                <div class="group relative">
-                    <p class="text-xs text-gray-500 uppercase">${label}</p>
-                    <div class="flex items-center gap-2">
-                        <span class="font-bold">${val || 'Not Set'}</span>
-                        <button onclick="copy('${val}')" class="text-[10px] text-blue-500 opacity-0 group-hover:opacity-100 transition underline">Copy</button>
-                    </div>
-                </div>
-            `;
+        function copy(t) {
+            navigator.clipboard.writeText(t);
+            notify("Copied!");
         }
 
-        function copy(txt) {
-            navigator.clipboard.writeText(txt);
-            notify("Copied to clipboard!");
-        }
-
-        function notify(msg, color = "blue") {
+        function notify(msg, col) {
             const t = document.getElementById('toast');
-            t.style.backgroundColor = color === "red" ? "#dc2626" : "#2563eb";
+            t.className = `fixed top-5 right-5 px-6 py-3 rounded-xl shadow-2xl z-[100] text-white font-bold ${col === 'red' ? 'bg-red-600' : 'bg-green-600'}`;
             t.innerText = msg;
             t.classList.remove('hidden');
             setTimeout(() => t.classList.add('hidden'), 3000);
         }
 
         function closeModal() { document.getElementById('modal').classList.add('hidden'); }
-        function logout() { location.reload(); }
     </script>
 </body>
 </html>
