@@ -1,1 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vault.Network | Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { background-color: #050505; color: #e5e5e5; font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(20, 20, 20, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
+        .input-dark { background: #121212; border: 1px solid #2a2a2a; color: white; padding: 12px; border-radius: 8px; width: 100%; outline: none; }
+        .input-dark:focus { border-color: #3b82f6; }
+        .btn-primary { background: #2563eb; transition: 0.3s; }
+        .btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); }
+    </style>
+</head>
+<body class="min-h-screen">
 
+    <div id="toast" class="fixed top-5 right-5 hidden bg-blue-600 text-white px-6 py-3 rounded-xl shadow-2xl z-[100] animate-bounce"></div>
+
+    <div id="login-section" class="flex items-center justify-center min-h-screen">
+        <div class="glass p-10 rounded-3xl w-full max-w-md shadow-2xl">
+            <h2 class="text-3xl font-black mb-2 text-white">Login</h2>
+            <p class="text-gray-400 mb-8">Access your network dashboard</p>
+            <input type="email" id="l-email" placeholder="Email Address" class="input-dark mb-4">
+            <input type="password" id="l-pass" placeholder="Password" class="input-dark mb-6">
+            <button onclick="login()" class="w-full btn-primary p-4 rounded-xl font-bold">Sign In</button>
+        </div>
+    </div>
+
+    <div id="dashboard" class="hidden p-6 max-w-7xl mx-auto">
+        <header class="flex justify-between items-center mb-10">
+            <div>
+                <h1 class="text-2xl font-bold">Hello, <span id="user-name" class="text-blue-500"></span></h1>
+                <p class="text-sm text-gray-500">ID: <span id="user-id-display"></span></p>
+            </div>
+            <button onclick="logout()" class="bg-red-500/10 text-red-500 border border-red-500/30 px-6 py-2 rounded-full hover:bg-red-500 hover:text-white transition">Logout</button>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div class="lg:col-span-4 glass p-6 rounded-2xl h-fit">
+                <h3 class="text-lg font-bold mb-6 border-b border-white/10 pb-2">Add New Member</h3>
+                <div class="space-y-4">
+                    <input type="text" id="f-name" placeholder="Full Name" class="input-dark">
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="email" id="f-email" placeholder="Email" class="input-dark">
+                        <input type="text" id="f-pass" placeholder="Password" class="input-dark">
+                    </div>
+                    <input type="text" id="f-phone" placeholder="Phone Number" class="input-dark">
+                    <input type="text" id="f-assoc" placeholder="Associate ID" class="input-dark">
+                    
+                    <select id="f-level" class="input-dark">
+                        <option value="25%">25%</option>
+                        <option value="35%(senior consultant)">35% (Senior Consultant)</option>
+                        <option value="42%(success builder)">42% (Success Builder)</option>
+                        <option value="50%(Supervisior)">50% (Supervisor)</option>
+                        <option value="World Team">World Team</option>
+                        <option value="Active World Team">Active World Team</option>
+                        <option value="GET Team">GET Team</option>
+                        <option value="GET 2500 Team">GET 2500 Team</option>
+                        <option value="Millionaire Team">Millionaire Team</option>
+                        <option value="Millionaire 7500 Team">Millionaire 7500 Team</option>
+                        <option value="President Team">President Team</option>
+                    </select>
+
+                    <label class="flex items-center space-x-3 cursor-pointer p-2 rounded-lg hover:bg-white/5">
+                        <input type="checkbox" id="f-biz" class="w-5 h-5 rounded border-gray-700 bg-black">
+                        <span class="text-sm">Sponsor Business ID (Yes/No)</span>
+                    </label>
+
+                    <div class="pt-4 border-t border-white/10 mt-4">
+                        <p class="text-xs text-gray-500 mb-2 uppercase tracking-widest font-bold">Optional Verification</p>
+                        <input type="text" id="f-aadhar" placeholder="Aadhar Photo URL" class="input-dark mb-2">
+                        <input type="text" id="f-pan" placeholder="PAN Photo URL" class="input-dark">
+                    </div>
+                    
+                    <button onclick="saveMember()" class="w-full bg-green-600 hover:bg-green-700 p-4 rounded-xl font-bold mt-4 shadow-lg shadow-green-900/20">Add to Network</button>
+                </div>
+            </div>
+
+            <div class="lg:col-span-8">
+                <h3 class="text-xl font-bold mb-6">Downline Network</h3>
+                <div id="cards-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal" class="fixed inset-0 bg-black/90 hidden z-50 flex items-center justify-center p-4">
+        <div class="glass w-full max-w-2xl p-8 rounded-3xl relative">
+            <button onclick="closeModal()" class="absolute top-6 right-6 text-2xl hover:text-red-500 transition">&times;</button>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <script>
+        const SB_URL = 'https://znelnyiupddbelcsuvns.supabase.co';
+        const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpuZWxueWl1cGRkYmVsY3N1dm5zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyMTMxMTgsImV4cCI6MjA5MDc4OTExOH0.aZV36Q-vgT1gy2KY4FFGPNtJ7KMEnroozECxA-gMAOg';
+        const _client = supabase.createClient(SB_URL, SB_KEY);
+
+        let userSession = null;
+
+        async function login() {
+            const email = document.getElementById('l-email').value;
+            const pass = document.getElementById('l-pass').value;
+
+            const { data, error } = await _client
+                .from('network_members')
+                .select('*')
+                .eq('email', email)
+                .eq('password', pass)
+                .single();
+
+            if (data) {
+                userSession = data;
+                document.getElementById('login-section').classList.add('hidden');
+                document.getElementById('dashboard').classList.remove('hidden');
+                document.getElementById('user-name').innerText = data.full_name;
+                document.getElementById('user-id-display').innerText = data.associate_id;
+                loadNetwork();
+            } else {
+                notify("Invalid Credentials!", "red");
+            }
+        }
+
+        async function loadNetwork() {
+            const { data } = await _client
+                .from('network_members')
+                .select('*')
+                .eq('sponsor_id', userSession.associate_id);
+
+            const grid = document.getElementById('cards-grid');
+            grid.innerHTML = '';
+
+            data.forEach(member => {
+                const card = document.createElement('div');
+                card.className = "glass p-6 rounded-2xl cursor-pointer hover:border-blue-500/50 transition";
+                card.onclick = () => showDetails(member);
+                card.innerHTML = `
+                    <h4 class="text-lg font-bold">${member.full_name}</h4>
+                    <p class="text-blue-400 text-sm font-medium uppercase tracking-tighter">${member.level}</p>
+                    <p class="text-xs text-gray-500 mt-2">ID: ${member.associate_id}</p>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        async function saveMember() {
+            const payload = {
+                full_name: document.getElementById('f-name').value,
+                email: document.getElementById('f-email').value,
+                password: document.getElementById('f-pass').value,
+                phone_no: document.getElementById('f-phone').value,
+                associate_id: document.getElementById('f-assoc').value,
+                level: document.getElementById('f-level').value,
+                sponsor_business_id: document.getElementById('f-biz').checked,
+                aadhar_photo_url: document.getElementById('f-aadhar').value,
+                pan_photo_url: document.getElementById('f-pan').value,
+                sponsor_id: userSession.associate_id
+            };
+
+            const { error } = await _client.from('network_members').insert([payload]);
+            if (!error) {
+                notify("Member added successfully!");
+                loadNetwork();
+                // Clear fields
+                document.querySelectorAll('.input-dark').forEach(i => i.value = '');
+            } else {
+                notify("Error: Associate ID already exists", "red");
+            }
+        }
+
+        function showDetails(m) {
+            const modal = document.getElementById('modal');
+            const body = document.getElementById('modal-body');
+            body.innerHTML = `
+                <h2 class="text-3xl font-bold mb-6">${m.full_name}</h2>
+                <div class="grid grid-cols-2 gap-6">
+                    ${detailItem("Email", m.email)}
+                    ${detailItem("Password", m.password)}
+                    ${detailItem("Phone", m.phone_no)}
+                    ${detailItem("Associate ID", m.associate_id)}
+                    ${detailItem("Level", m.level)}
+                    <div>
+                        <p class="text-xs text-gray-500">Business ID</p>
+                        <p class="font-bold">${m.sponsor_business_id ? '✅ Yes' : '❌ No'}</p>
+                    </div>
+                </div>
+                <div class="mt-10 pt-6 border-t border-white/10 flex gap-4">
+                    <button onclick="editMode('${m.id}')" class="bg-blue-500 px-8 py-3 rounded-xl font-bold">Edit Profile</button>
+                    <button onclick="closeModal()" class="bg-white/10 px-8 py-3 rounded-xl font-bold">Close</button>
+                </div>
+            `;
+            modal.classList.remove('hidden');
+        }
+
+        function detailItem(label, val) {
+            return `
+                <div class="group relative">
+                    <p class="text-xs text-gray-500 uppercase">${label}</p>
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold">${val || 'Not Set'}</span>
+                        <button onclick="copy('${val}')" class="text-[10px] text-blue-500 opacity-0 group-hover:opacity-100 transition underline">Copy</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function copy(txt) {
+            navigator.clipboard.writeText(txt);
+            notify("Copied to clipboard!");
+        }
+
+        function notify(msg, color = "blue") {
+            const t = document.getElementById('toast');
+            t.style.backgroundColor = color === "red" ? "#dc2626" : "#2563eb";
+            t.innerText = msg;
+            t.classList.remove('hidden');
+            setTimeout(() => t.classList.add('hidden'), 3000);
+        }
+
+        function closeModal() { document.getElementById('modal').classList.add('hidden'); }
+        function logout() { location.reload(); }
+    </script>
+</body>
+</html>
