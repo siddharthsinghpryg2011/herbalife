@@ -3,45 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Network Vault | Strict Hierarchy</title>
+    <title>Network Vault | Real-time Sync</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { background-color: #050505; color: #eee; font-family: 'Inter', sans-serif; overflow: hidden; }
-        
-        /* Tree Layout CSS */
-        .tree-viewport { height: 100vh; width: 100vw; overflow: auto; padding: 80px 20px; display: flex; justify-content: center; }
-        .tree ul { padding-top: 20px; position: relative; display: flex; justify-content: center; }
-        .tree li { text-align: center; list-style-type: none; position: relative; padding: 20px 10px 0 10px; }
-        .tree li::before, .tree li::after { content: ''; position: absolute; top: 0; right: 50%; border-top: 2px solid #222; width: 50%; height: 20px; }
-        .tree li::after { right: auto; left: 50%; border-left: 2px solid #222; }
+        body { background-color: #050505; color: #eee; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        .tree-viewport { height: 100vh; width: 100vw; overflow: auto; padding: 150px 50px; display: flex; justify-content: center; }
+        .tree ul { padding-top: 40px; position: relative; display: flex; justify-content: center; }
+        .tree li { text-align: center; list-style-type: none; position: relative; padding: 40px 25px 0 25px; }
+        .tree li::before, .tree li::after { content: ''; position: absolute; top: 0; right: 50%; border-top: 3px solid #333; width: 50%; height: 40px; }
+        .tree li::after { right: auto; left: 50%; border-left: 3px solid #333; }
         .tree li:only-child::after, .tree li:only-child::before { display: none; }
         .tree li:only-child { padding-top: 0; }
         .tree li:first-child::before, .tree li:last-child::after { border: 0 none; }
-        .tree li:last-child::before { border-right: 2px solid #222; border-radius: 0 5px 0 0; }
-        .tree li:first-child::after { border-radius: 5px 0 0 0; }
-        .tree ul ul::before { content: ''; position: absolute; top: 0; left: 50%; border-left: 2px solid #222; width: 0; height: 20px; }
-
-        .node-card { 
-            background: #111; border: 1px solid #222; padding: 12px; border-radius: 12px; 
-            display: inline-block; min-width: 150px; cursor: pointer; transition: 0.2s;
-        }
-        .node-card:hover { border-color: #3b82f6; background: #161616; }
-        .active-user { border-color: #3b82f6; background: #001533; box-shadow: 0 0 15px rgba(59,130,246,0.2); }
-
-        .form-panel { position: fixed; right: 20px; bottom: 20px; z-index: 100; }
-        .hidden { display: none; }
+        .tree li:last-child::before { border-right: 3px solid #333; border-radius: 0 10px 0 0; }
+        .tree li:first-child::after { border-radius: 10px 0 0 0; }
+        .tree ul ul::before { content: ''; position: absolute; top: 0; left: 50%; border-left: 3px solid #333; width: 0; height: 40px; }
+        .node-card { background: #111; border: 2px solid #222; padding: 30px; border-radius: 28px; display: inline-block; min-width: 260px; cursor: pointer; transition: 0.3s; }
+        .node-card:hover { border-color: #3b82f6; background: #181818; transform: translateY(-8px); }
+        .active-user { border-color: #3b82f6; background: #001e4d; box-shadow: 0 0 40px rgba(59,130,246,0.4); }
+        #search-results-container { padding: 140px 20px; max-width: 900px; margin: 0 auto; }
+        .result-item { background: #111; border: 2px solid #222; margin-bottom: 15px; padding: 20px; border-radius: 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        input, select { background: #000 !important; color: white !important; border: 1px solid #333 !important; font-size: 16px !important; }
+        .hidden { display: none !important; }
+        .profile-img-lg { width: 140px; height: 140px; border-radius: 50%; object-fit: cover; border: 4px solid #3b82f6; }
     </style>
 </head>
 <body>
 
+    <div id="search-bar" class="fixed top-10 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-[700px] hidden">
+        <div class="relative">
+            <input type="text" id="tree-search" oninput="handleSearch()" placeholder="Search network..." class="w-full p-6 pl-16 rounded-full shadow-2xl outline-none">
+            <i data-lucide="search" class="absolute left-6 top-1/2 -translate-y-1/2 text-gray-500 w-6 h-6"></i>
+        </div>
+    </div>
+
     <div id="login-box" class="fixed inset-0 bg-black flex items-center justify-center z-[500]">
-        <div class="bg-[#111] p-8 rounded-3xl w-full max-w-sm border border-white/5">
-            <h2 class="text-2xl font-black mb-6 text-center tracking-tighter">VAULT LOGIN</h2>
-            <input type="email" id="l-email" placeholder="Email" class="w-full bg-black border border-white/10 p-3 rounded-xl mb-3 outline-none focus:border-blue-500">
-            <input type="password" id="l-pass" placeholder="Password" class="w-full bg-black border border-white/10 p-3 rounded-xl mb-5 outline-none focus:border-blue-500">
-            <button onclick="login()" class="w-full bg-blue-600 p-3 rounded-xl font-bold">Open Tree</button>
+        <div class="bg-[#111] p-12 rounded-[3.5rem] w-full max-w-md border border-white/5 shadow-2xl text-center">
+            <h2 class="text-4xl font-black mb-10 text-blue-500 italic uppercase">Vault Login</h2>
+            <div class="space-y-5">
+                <input type="email" id="l-email" placeholder="Email" class="w-full p-5 rounded-2xl outline-none border border-white/10">
+                <div class="relative">
+                    <input type="password" id="l-pass" placeholder="Password" class="w-full p-5 rounded-2xl outline-none border border-white/10">
+                    <i data-lucide="eye" class="absolute right-5 top-1/2 -translate-y-1/2 cursor-pointer text-gray-600" onclick="togglePass('l-pass')"></i>
+                </div>
+                <button onclick="login()" class="w-full bg-blue-600 py-6 rounded-2xl font-black text-2xl">Unlock</button>
+            </div>
         </div>
     </div>
 
@@ -49,14 +58,17 @@
         <div class="tree" id="tree-container"></div>
     </div>
 
-    <div class="form-panel hidden" id="ui-actions">
-        <button onclick="openAddForm()" class="bg-blue-600 text-white px-6 py-3 rounded-full font-black shadow-lg">+ ADD DOWNLINE</button>
-        <button onclick="location.reload()" class="bg-red-900 text-white px-6 py-3 rounded-full font-black ml-2 shadow-lg">LOGOUT</button>
+    <div id="search-results-view" class="hidden min-h-screen">
+        <div id="search-results-container"></div>
     </div>
 
-    <div id="modal" class="fixed inset-0 bg-black/90 hidden z-[1000] flex items-center justify-center p-4 backdrop-blur-md">
-        <div class="bg-[#111] w-full max-w-md p-8 rounded-[2rem] border border-white/10" id="modal-inner">
-            </div>
+    <div class="fixed bottom-12 right-12 flex flex-col gap-5 hidden" id="ui-actions">
+        <button onclick="openAddForm()" class="bg-blue-600 text-white px-12 py-6 rounded-full font-black text-xl shadow-2xl hover:scale-105 transition">+ NEW MEMBER</button>
+        <button onclick="logout()" class="bg-white/5 text-gray-400 px-8 py-4 rounded-full font-bold text-sm border border-white/10">Logout</button>
+    </div>
+
+    <div id="modal" class="fixed inset-0 bg-black/95 hidden z-[1000] flex items-center justify-center p-6 backdrop-blur-2xl overflow-y-auto">
+        <div class="bg-[#111] w-full max-w-3xl p-10 rounded-[4rem] border border-white/10 my-10 relative" id="modal-inner"></div>
     </div>
 
     <script>
@@ -64,114 +76,225 @@
         const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpuZWxueWl1cGRkYmVsY3N1dm5zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyMTMxMTgsImV4cCI6MjA5MDc4OTExOH0.aZV36Q-vgT1gy2KY4FFGPNtJ7KMEnroozECxA-gMAOg';
         const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
-        let activeUser = null;
-        let members = [];
+        let activeUser = null, members = [], visibleMembers = [], tempPhotoData = "";
+        const levels = ["25%", "35% (Senior Consultant)", "42% (Success Builder)", "50% (Supervisor)", "World Team", "Active World Team", "GET Team", "GET 2500 Team", "Millionaire Team", "Millionaire 7500 Team", "President Team"];
 
         async function login() {
-            const e = document.getElementById('l-email').value;
-            const p = document.getElementById('l-pass').value;
-            const { data } = await _supabase.from('network_members').select('*').eq('email', e).eq('password', p);
-            
-            if(data && data.length > 0) {
-                activeUser = data[0];
-                document.getElementById('login-box').classList.add('hidden');
-                document.getElementById('tree-viewer').classList.remove('hidden');
-                document.getElementById('ui-actions').classList.remove('hidden');
-                refreshTree();
-            } else { alert("Invalid Credentials"); }
+            const e = document.getElementById('l-email').value, p = document.getElementById('l-pass').value;
+            const { data, error } = await _supabase.from('network_members').select('*').eq('email', e).eq('password', p).single();
+            if(data) { activeUser = data; localStorage.setItem('vault_user', JSON.stringify(activeUser)); showApp(); }
+            else alert("Login Failed! Check credentials.");
+        }
+
+        function showApp() {
+            document.getElementById('login-box').classList.add('hidden');
+            ["tree-viewer", "ui-actions", "search-bar"].forEach(id => document.getElementById(id).classList.remove('hidden'));
+            refreshTree();
         }
 
         async function refreshTree() {
             const { data } = await _supabase.from('network_members').select('*');
-            members = data;
-            const container = document.getElementById('tree-container');
-            container.innerHTML = `<ul>${renderNode(activeUser)}</ul>`;
-        }
-
-        function renderNode(user) {
-            // MATCHING LOGIC: Find people where I am their sponsor
-            // We check Sponsor Name AND Sponsor Phone matches my Name and Phone
-            const children = members.filter(m => 
-                m.sponsor_name === user.full_name && 
-                m.sponsor_phone === user.phone_no
-            );
-
-            let html = `<li>
-                <div class="node-card ${user.id === activeUser.id ? 'active-user' : ''}" onclick='showUser(${JSON.stringify(user)})'>
-                    <p class="text-[8px] font-black text-blue-500 uppercase">${user.level}</p>
-                    <p class="text-sm font-bold">${user.full_name}</p>
-                    <p class="text-[8px] opacity-30">${user.phone_no}</p>
-                </div>`;
-
-            if(children.length > 0) {
-                html += `<ul>${children.map(c => renderNode(c)).join('')}</ul>`;
-            }
-            html += `</li>`;
-            return html;
-        }
-
-        function showUser(user) {
-            const inner = document.getElementById('modal-inner');
-            inner.innerHTML = `
-                <h2 class="text-2xl font-black mb-4">${user.full_name}</h2>
-                <div class="space-y-3 mb-6">
-                    ${row("Associate ID", user.associate_id)}
-                    ${row("Phone", user.phone_no)}
-                    ${row("Email", user.email)}
-                    ${row("Password", user.password)}
-                    ${row("Sponsor", user.sponsor_name)}
-                    ${row("Sponsor Phone", user.sponsor_phone || 'N/A')}
-                </div>
-                <div class="flex gap-2">
-                    <button class="bg-blue-600 flex-1 p-3 rounded-xl font-bold text-xs" onclick="copy('${user.password}')">COPY PASSWORD</button>
-                    <button class="bg-white/10 flex-1 p-3 rounded-xl font-bold text-xs" onclick="closeModal()">CLOSE</button>
-                </div>
-            `;
-            document.getElementById('modal').classList.remove('hidden');
-        }
-
-        function row(l, v) {
-            return `<div class="flex justify-between bg-white/5 p-3 rounded-xl"><span class="text-[10px] text-gray-500 uppercase">${l}</span><span class="text-sm font-bold">${v}</span></div>`;
-        }
-
-        function openAddForm() {
-            const inner = document.getElementById('modal-inner');
-            inner.innerHTML = `
-                <h2 class="text-xl font-black mb-4">ADD NEW DOWNLINE</h2>
-                <div class="space-y-2">
-                    <input id="n-name" placeholder="Full Name" class="w-full bg-black p-3 rounded-xl border border-white/10">
-                    <input id="n-email" placeholder="Email" class="w-full bg-black p-3 rounded-xl border border-white/10">
-                    <input id="n-pass" placeholder="Password" class="w-full bg-black p-3 rounded-xl border border-white/10">
-                    <input id="n-phone" placeholder="Phone Number" class="w-full bg-black p-3 rounded-xl border border-white/10">
-                    <input id="n-assoc" placeholder="Associate ID" class="w-full bg-black p-3 rounded-xl border border-white/10">
-                    <p class="text-[10px] text-blue-500 mt-2 italic font-bold">Auto-Sponsor: ${activeUser.full_name}</p>
-                </div>
-                <button onclick="saveNew()" class="w-full bg-blue-600 p-4 rounded-xl font-black mt-4">CREATE CARD</button>
-            `;
-            document.getElementById('modal').classList.remove('hidden');
-        }
-
-        async function saveNew() {
-            const payload = {
-                full_name: document.getElementById('n-name').value,
-                email: document.getElementById('n-email').value,
-                password: document.getElementById('n-pass').value,
-                phone_no: document.getElementById('n-phone').value,
-                associate_id: document.getElementById('n-assoc').value,
-                sponsor_name: activeUser.full_name,     // Automatically your name
-                sponsor_phone: activeUser.phone_no,     // Automatically your phone
-                level: '25%'
-            };
+            members = data || [];
+            visibleMembers = [];
             
-            const { error } = await _supabase.from('network_members').insert([payload]);
-            if(!error) {
-                closeModal();
-                refreshTree();
-            } else { alert("Error saving data"); }
+            // Re-sync active user details if they were updated
+            const updatedActive = members.find(m => m.id === activeUser.id);
+            if(updatedActive) activeUser = updatedActive;
+
+            document.getElementById('tree-container').innerHTML = `<ul>${nodeToHTML(activeUser)}</ul>`;
+            lucide.createIcons();
         }
 
-        function copy(t) { navigator.clipboard.writeText(t); alert("Copied!"); }
+        function nodeToHTML(user) {
+            visibleMembers.push(user);
+            const children = members.filter(m => 
+                String(m.sponsor_name).trim().toLowerCase() === String(user.full_name).trim().toLowerCase() && 
+                String(m.sponsor_phone).trim() === String(user.phone_no).trim()
+            );
+            let html = `<li>
+                <div class="node-card ${user.id === activeUser.id ? 'active-user' : ''}" onclick='showDetails(${JSON.stringify(user)})'>
+                    <p class="text-[12px] font-black text-blue-400 uppercase tracking-widest">${user.level || '25%'}</p>
+                    <p class="text-2xl font-black mt-1">${user.full_name}</p>
+                    <p class="text-sm opacity-40">${user.associate_id}</p>
+                </div>`;
+            if(children.length > 0) html += `<ul>${children.map(c => nodeToHTML(c)).join('')}</ul>`;
+            return html + `</li>`;
+        }
+
+        function handleSearch() {
+            const q = document.getElementById('tree-search').value.toLowerCase().trim();
+            const treeV = document.getElementById('tree-viewer'), listV = document.getElementById('search-results-view');
+            if(!q) { treeV.classList.remove('hidden'); listV.classList.add('hidden'); return; }
+            treeV.classList.add('hidden'); listV.classList.remove('hidden');
+            const filtered = visibleMembers.filter(m => m.full_name.toLowerCase().includes(q) || m.associate_id.toLowerCase().includes(q) || String(m.phone_no).includes(q));
+            document.getElementById('search-results-container').innerHTML = filtered.map(m => `
+                <div class="result-item" onclick='showDetails(${JSON.stringify(m)})'>
+                    <div class="flex items-center gap-4">
+                        ${m.photo_url ? `<img src="${m.photo_url}" class="w-14 h-14 rounded-full border-2 border-blue-500 object-cover">` : `<div class="w-14 h-14 bg-gray-800 rounded-full flex items-center justify-center"><i data-lucide="user" class="text-gray-500"></i></div>`}
+                        <div><p class="text-blue-500 font-black text-xs uppercase">${m.level}</p><p class="text-2xl font-bold">${m.full_name}</p></div>
+                    </div>
+                    <i data-lucide="chevron-right"></i>
+                </div>`).join('') || `<p class="text-center opacity-30 mt-10">No member found.</p>`;
+            lucide.createIcons();
+        }
+
+        function showDetails(user) {
+            const inner = document.getElementById('modal-inner');
+            inner.innerHTML = `
+                <button onclick="closeModal()" class="absolute top-8 right-8 text-gray-500 hover:text-white"><i data-lucide="x" class="w-8 h-8"></i></button>
+                <div class="flex flex-col items-center mb-10 mt-4">
+                    ${user.photo_url ? `<img src="${user.photo_url}" class="profile-img-lg">` : `<div class="w-32 h-32 bg-gray-900 rounded-full flex items-center justify-center border-2 border-gray-800"><i data-lucide="user" class="w-16 h-16 text-gray-700"></i></div>`}
+                    <h2 class="text-5xl font-black italic text-white mt-6 text-center tracking-tight">${user.full_name}</h2>
+                    <span class="bg-blue-600/20 text-blue-400 px-6 py-2 rounded-full text-sm font-black mt-3 uppercase tracking-widest">${user.level}</span>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
+                    ${detailRow("Associate ID", user.associate_id, "id-card")}
+                    ${detailRow("Phone Number", user.phone_no, "phone")}
+                    ${detailRow("Email Address", user.email, "mail")}
+                    <div class="bg-white/5 p-5 rounded-3xl border border-white/5 flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div class="bg-blue-500/10 p-3 rounded-2xl"><i data-lucide="lock" class="w-5 h-5 text-blue-500"></i></div>
+                            <div><p class="text-[10px] text-gray-500 uppercase font-black tracking-widest mb-0.5">Password</p>
+                            <p class="text-lg font-bold text-gray-100" id="det-pass">••••••••</p></div>
+                        </div>
+                        <i data-lucide="eye" class="w-5 h-5 text-gray-600 cursor-pointer" onclick="toggleDetPass('${user.password}')"></i>
+                    </div>
+                    ${detailRow("Upline Sponsor", user.sponsor_name, "users")}
+                    ${detailRow("Upline Contact", user.sponsor_phone, "contact")}
+                    ${detailRow("Joined Date", user.reg_date || 'N/A', "calendar")}
+                </div>
+
+                <div class="flex gap-4">
+                    <button class="bg-blue-600 flex-[2] py-6 rounded-3xl font-black text-xl shadow-xl" onclick='openEditForm(${JSON.stringify(user)})'>EDIT PROFILE</button>
+                    <button class="bg-white/10 flex-1 py-6 rounded-3xl font-black text-xl" onclick="closeModal()">CLOSE</button>
+                </div>`;
+            document.getElementById('modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function toggleDetPass(pass) {
+            const p = document.getElementById('det-pass');
+            p.innerText = p.innerText === '••••••••' ? pass : '••••••••';
+        }
+
+        function detailRow(label, value, icon) {
+            return `<div class="bg-white/5 p-5 rounded-3xl border border-white/5 flex items-center gap-4"><div class="bg-blue-500/10 p-3 rounded-2xl"><i data-lucide="${icon}" class="w-5 h-5 text-blue-500"></i></div><div><p class="text-[10px] text-gray-500 uppercase font-black tracking-widest mb-0.5">${label}</p><p class="text-lg font-bold text-gray-100">${value}</p></div></div>`;
+        }
+
+        function renderForm(user = null) {
+            tempPhotoData = user?.photo_url || "";
+            const inner = document.getElementById('modal-inner');
+            inner.innerHTML = `
+                <h2 class="text-3xl font-black mb-8 italic uppercase text-center">${user ? 'Edit Member' : 'New Member'}</h2>
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <input id="f-name" placeholder="Full Name" value="${user?.full_name || ''}" class="p-5 rounded-2xl w-full outline-none">
+                        <input id="f-assoc" placeholder="ID" value="${user?.associate_id || ''}" class="p-5 rounded-2xl w-full outline-none">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <input id="f-phone" placeholder="Phone" value="${user?.phone_no || ''}" class="p-5 rounded-2xl w-full outline-none">
+                        <input id="f-email" placeholder="Email" value="${user?.email || ''}" class="p-5 rounded-2xl w-full outline-none">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="relative"><input id="f-pass" type="password" placeholder="Password" value="${user?.password || ''}" class="p-5 rounded-2xl w-full outline-none pr-14"><i data-lucide="eye" class="absolute right-5 top-1/2 -translate-y-1/2 cursor-pointer text-gray-600" onclick="togglePass('f-pass')"></i></div>
+                        <select id="f-level" class="p-5 rounded-2xl w-full outline-none">${levels.map(l => `<option value="${l}" ${user?.level === l ? 'selected' : ''}>${l}</option>`).join('')}</select>
+                    </div>
+                    <div class="p-6 bg-blue-600/5 rounded-[2.5rem] border border-blue-500/20">
+                        <p class="text-[10px] font-black text-blue-500 mb-3 uppercase tracking-widest">Upline Sponsor Verification</p>
+                        <div class="grid grid-cols-2 gap-4">
+                            <input id="f-sp-name" placeholder="Sponsor Name" value="${user?.sponsor_name || ''}" class="p-4 rounded-xl w-full outline-none">
+                            <input id="f-sp-phone" placeholder="Sponsor Phone" value="${user?.sponsor_phone || ''}" class="p-4 rounded-xl w-full outline-none">
+                        </div>
+                    </div>
+                    <div class="p-5 bg-white/5 rounded-[2.5rem] border border-white/5">
+                        <button onclick="document.getElementById('adv-section').classList.toggle('hidden')" class="w-full flex justify-between items-center text-blue-500 text-sm font-black uppercase"><span>⚙️ Advanced Settings</span><i data-lucide="chevron-down" class="w-4 h-4"></i></button>
+                        <div id="adv-section" class="hidden mt-6 space-y-6">
+                            <input id="f-date" type="date" value="${user?.reg_date || ''}" class="w-full p-4 rounded-xl bg-black border border-white/10 outline-none">
+                            <div class="flex items-center gap-6"><div id="preview-area">${tempPhotoData ? `<img src="${tempPhotoData}" class="w-20 h-20 rounded-full border-2 border-blue-500 object-cover">` : `<div class="w-20 h-20 bg-gray-900 rounded-full flex items-center justify-center border-2 border-dashed border-gray-700"><i data-lucide="camera" class="text-gray-600"></i></div>`}</div><input type="file" id="f-file" accept="image/*" onchange="handleFileUpload(event)" class="text-xs text-gray-400 file:bg-blue-600 file:px-4 file:py-2 file:rounded-full file:text-white cursor-pointer"></div>
+                        </div>
+                    </div>
+                    <div class="flex gap-4 mt-6">
+                        <button onclick="${user ? `saveUpdate('${user.id}')` : 'saveNewMember()'}" class="flex-[2] bg-blue-600 p-6 rounded-3xl font-black text-xl shadow-xl">SAVE DATA</button>
+                        <button onclick="closeModal()" class="flex-1 bg-white/10 p-6 rounded-3xl font-black text-xl">CANCEL</button>
+                    </div>
+                </div>`;
+            document.getElementById('modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 400;
+                    const scaleSize = MAX_WIDTH / img.width;
+                    canvas.width = MAX_WIDTH;
+                    canvas.height = img.height * scaleSize;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    tempPhotoData = canvas.toDataURL('image/jpeg', 0.7);
+                    document.getElementById('preview-area').innerHTML = `<img src="${tempPhotoData}" class="w-20 h-20 rounded-full border-2 border-blue-500 object-cover">`;
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function verifySponsor(spName, spPhone) {
+            const { data } = await _supabase.from('network_members').select('full_name, phone_no');
+            return data.some(m => String(m.full_name).trim().toLowerCase() === String(spName).trim().toLowerCase() && String(m.phone_no).trim() === String(spPhone).trim());
+        }
+
+        async function saveNewMember() {
+            const p = getFields();
+            if(await verifySponsor(p.sponsor_name, p.sponsor_phone)) {
+                const { error } = await _supabase.from('network_members').insert([p]);
+                if(!error) { closeModal(); await refreshTree(); alert("✅ Success!"); }
+            } else alert("❌ Sponsor Mismatch!");
+        }
+
+        // --- FIXED SAVE UPDATE WITH DATA REFRESH ---
+        async function saveUpdate(id) {
+            const p = getFields();
+            const isValid = await verifySponsor(p.sponsor_name, p.sponsor_phone);
+            if(!isValid) return alert("❌ Sponsor Mismatch!");
+
+            const { error } = await _supabase.from('network_members').update(p).eq('id', id);
+            if(!error) { 
+                closeModal(); 
+                await refreshTree(); // Database se naya data laao
+                alert("✅ Updated Successfully!"); 
+            } else {
+                alert("Error: " + error.message);
+            }
+        }
+
+        function getFields() {
+            return {
+                full_name: document.getElementById('f-name').value.trim(),
+                associate_id: document.getElementById('f-assoc').value.trim(),
+                phone_no: document.getElementById('f-phone').value.trim(),
+                email: document.getElementById('f-email').value.trim(),
+                password: document.getElementById('f-pass').value.trim(),
+                level: document.getElementById('f-level').value,
+                reg_date: document.getElementById('f-date').value || null,
+                photo_url: tempPhotoData,
+                sponsor_name: document.getElementById('f-sp-name').value.trim(),
+                sponsor_phone: document.getElementById('f-sp-phone').value.trim()
+            };
+        }
+
+        function togglePass(id) { const el = document.getElementById(id); el.type = el.type === 'password' ? 'text' : 'password'; }
+        function openAddForm() { renderForm(null); }
+        function openEditForm(user) { renderForm(user); }
         function closeModal() { document.getElementById('modal').classList.add('hidden'); }
+        function logout() { localStorage.removeItem('vault_user'); location.reload(); }
+        window.onload = () => { if(localStorage.getItem('vault_user')) { activeUser = JSON.parse(localStorage.getItem('vault_user')); showApp(); } };
     </script>
 </body>
 </html>
