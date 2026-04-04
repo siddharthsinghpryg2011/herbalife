@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Network Vault | PC Optimized</title>
+    <title>Network Vault | Fixed</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -11,11 +11,9 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         :root { --accent: #3b82f6; --bg: #050505; --card: #111; --error: #ef4444; }
         body { background-color: var(--bg); color: #eee; font-family: 'Inter', sans-serif; margin: 0; overflow: hidden; touch-action: none; }
-        
         #tree-viewport { width: 100vw; height: 100vh; cursor: grab; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         #tree-viewport:active { cursor: grabbing; }
         #drag-container { position: absolute; transform-origin: center; transition: transform 0.1s ease-out; }
-        
         .tree ul { padding-top: 40px; position: relative; display: flex; justify-content: center; }
         .tree li { text-align: center; list-style-type: none; position: relative; padding: 40px 15px 0 15px; }
         .tree li::before, .tree li::after { content: ''; position: absolute; top: 0; right: 50%; border-top: 2px solid #333; width: 50%; height: 40px; }
@@ -25,15 +23,12 @@
         .tree li:first-child::after { border-radius: 10px 0 0 0; }
         .tree li:last-child::before { border-right: 2px solid #333; border-radius: 0 10px 0 0; }
         .tree ul ul::before { content: ''; position: absolute; top: 0; left: 50%; border-left: 2px solid #333; width: 0; height: 40px; }
-        
         .node-card { background: var(--card); border: 2px solid #222; padding: 20px; border-radius: 20px; display: inline-block; min-width: 180px; max-width: 220px; cursor: pointer; transition: 0.3s; }
         .node-card:hover { border-color: var(--accent); transform: scale(1.05); }
         .active-user { border-color: var(--accent); background: #001e4d; box-shadow: 0 0 30px rgba(59,130,246,0.3); }
-        
         .truncate-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
         input, select { background: #000 !important; color: white !important; border: 1px solid #333 !important; }
         .hidden { display: none !important; }
-        
         .action-dock { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; z-index: 100; width: 90%; max-width: 500px; }
         .copy-btn { padding: 8px; border-radius: 10px; background: rgba(255,255,255,0.05); transition: 0.2s; cursor: pointer; }
         .error-msg { color: var(--error); font-size: 11px; font-weight: bold; margin-top: 4px; text-align: left; padding-left: 8px; }
@@ -91,7 +86,6 @@
         let activeUser = null, members = [], visibleInTree = [], isDragging = false, startX, startY, translateX = 0, translateY = 0;
         const levels = ["25%", "35% (Senior Consultant)", "42% (Success Builder)", "50% (Supervisor)", "World Team", "Active World Team", "GET Team", "GET 2500 Team", "Millionaire Team", "Millionaire 7500 Team", "President Team"];
 
-        // --- PASSWORD TOGGLE (PC COMPATIBLE) ---
         function togglePass(id) {
             const input = document.getElementById(id);
             const icon = document.getElementById('eye-icon');
@@ -196,7 +190,7 @@
             setTimeout(() => { icon.setAttribute('data-lucide', 'copy'); icon.classList.replace('text-green-400', 'text-gray-400'); lucide.createIcons(); }, 2000);
         }
 
-        function toggleDetPass(pass) { const p = document.getElementById('det-pass'); p.innerText = p.innerText === '••••••••' ? pass : '••••••••'; }
+        function toggleDetPass(pass) { const p = document.getElementById('det-pass'); p.innerText = p.innerText === '••••••••' ? pass : '••••••••'; lucide.createIcons(); }
 
         function initDraggable() {
             const viewport = document.getElementById('tree-viewport'), container = document.getElementById('drag-container');
