@@ -3,65 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Network Vault | Visual Tree</title>
+    <title>Network Vault | Strict Hierarchy</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { background-color: #0a0a0a; color: #eee; font-family: 'Inter', sans-serif; overflow: hidden; }
-        .tree-container { height: 100vh; width: 100vw; overflow: auto; padding: 50px; display: flex; justify-content: center; }
+        body { background-color: #050505; color: #eee; font-family: 'Inter', sans-serif; overflow: hidden; }
         
-        /* Tree CSS Logic */
-        .tree ul { padding-top: 20px; position: relative; transition: all 0.5s; display: flex; justify-content: center; }
-        .tree li { float: left; text-align: center; list-style-type: none; position: relative; padding: 20px 10px 0 10px; transition: all 0.5s; }
-        .tree li::before, .tree li::after { content: ''; position: absolute; top: 0; right: 50%; border-top: 2px solid #333; width: 50%; height: 20px; }
-        .tree li::after { right: auto; left: 50%; border-left: 2px solid #333; }
+        /* Tree Layout CSS */
+        .tree-viewport { height: 100vh; width: 100vw; overflow: auto; padding: 80px 20px; display: flex; justify-content: center; }
+        .tree ul { padding-top: 20px; position: relative; display: flex; justify-content: center; }
+        .tree li { text-align: center; list-style-type: none; position: relative; padding: 20px 10px 0 10px; }
+        .tree li::before, .tree li::after { content: ''; position: absolute; top: 0; right: 50%; border-top: 2px solid #222; width: 50%; height: 20px; }
+        .tree li::after { right: auto; left: 50%; border-left: 2px solid #222; }
         .tree li:only-child::after, .tree li:only-child::before { display: none; }
         .tree li:only-child { padding-top: 0; }
         .tree li:first-child::before, .tree li:last-child::after { border: 0 none; }
-        .tree li:last-child::before { border-right: 2px solid #333; border-radius: 0 5px 0 0; }
+        .tree li:last-child::before { border-right: 2px solid #222; border-radius: 0 5px 0 0; }
         .tree li:first-child::after { border-radius: 5px 0 0 0; }
-        .tree ul ul::before { content: ''; position: absolute; top: 0; left: 50%; border-left: 2px solid #333; width: 0; height: 20px; }
+        .tree ul ul::before { content: ''; position: absolute; top: 0; left: 50%; border-left: 2px solid #222; width: 0; height: 20px; }
 
         .node-card { 
-            background: #151515; border: 1px solid #333; padding: 15px; border-radius: 12px; 
-            display: inline-block; min-width: 160px; cursor: pointer; transition: 0.3s;
-            position: relative; z-index: 10;
+            background: #111; border: 1px solid #222; padding: 12px; border-radius: 12px; 
+            display: inline-block; min-width: 150px; cursor: pointer; transition: 0.2s;
         }
-        .node-card:hover { border-color: #3b82f6; transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
-        .node-card.active { border-color: #3b82f6; background: #1a1a2e; }
+        .node-card:hover { border-color: #3b82f6; background: #161616; }
+        .active-user { border-color: #3b82f6; background: #001533; box-shadow: 0 0 15px rgba(59,130,246,0.2); }
 
-        .glass-ui { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(20,20,20,0.8); backdrop-filter: blur(10px); padding: 15px 30px; border-radius: 50px; border: 1px solid rgba(255,255,255,0.1); display: flex; gap: 20px; z-index: 100; }
+        .form-panel { position: fixed; right: 20px; bottom: 20px; z-index: 100; }
         .hidden { display: none; }
     </style>
 </head>
 <body>
 
-    <div id="login-screen" class="fixed inset-0 bg-black flex items-center justify-center z-[200]">
-        <div class="bg-[#111] p-10 rounded-[2rem] w-full max-w-sm border border-white/5">
-            <h2 class="text-3xl font-black mb-8 text-center uppercase tracking-tighter">Login</h2>
-            <input type="email" id="l-email" placeholder="Email" class="w-full bg-[#1a1a1a] p-4 rounded-xl mb-4 outline-none border border-white/5">
-            <input type="password" id="l-pass" placeholder="Password" class="w-full bg-[#1a1a1a] p-4 rounded-xl mb-6 outline-none border border-white/5">
-            <button onclick="login()" class="w-full bg-blue-600 p-4 rounded-xl font-bold">Launch Tree</button>
+    <div id="login-box" class="fixed inset-0 bg-black flex items-center justify-center z-[500]">
+        <div class="bg-[#111] p-8 rounded-3xl w-full max-w-sm border border-white/5">
+            <h2 class="text-2xl font-black mb-6 text-center tracking-tighter">VAULT LOGIN</h2>
+            <input type="email" id="l-email" placeholder="Email" class="w-full bg-black border border-white/10 p-3 rounded-xl mb-3 outline-none focus:border-blue-500">
+            <input type="password" id="l-pass" placeholder="Password" class="w-full bg-black border border-white/10 p-3 rounded-xl mb-5 outline-none focus:border-blue-500">
+            <button onclick="login()" class="w-full bg-blue-600 p-3 rounded-xl font-bold">Open Tree</button>
         </div>
     </div>
 
-    <div id="tree-viewer" class="tree-container hidden">
-        <div class="tree" id="tree-root">
+    <div id="tree-viewer" class="tree-viewport hidden">
+        <div class="tree" id="tree-container"></div>
+    </div>
+
+    <div class="form-panel hidden" id="ui-actions">
+        <button onclick="openAddForm()" class="bg-blue-600 text-white px-6 py-3 rounded-full font-black shadow-lg">+ ADD DOWNLINE</button>
+        <button onclick="location.reload()" class="bg-red-900 text-white px-6 py-3 rounded-full font-black ml-2 shadow-lg">LOGOUT</button>
+    </div>
+
+    <div id="modal" class="fixed inset-0 bg-black/90 hidden z-[1000] flex items-center justify-center p-4 backdrop-blur-md">
+        <div class="bg-[#111] w-full max-w-md p-8 rounded-[2rem] border border-white/10" id="modal-inner">
             </div>
-    </div>
-
-    <div class="glass-ui hidden" id="ui-controls">
-        <button onclick="showAddForm()" class="text-blue-500 font-bold text-sm">+ ADD MEMBER</button>
-        <div class="w-[1px] bg-white/10 h-5"></div>
-        <button onclick="logout()" class="text-red-500 font-bold text-sm">LOGOUT</button>
-    </div>
-
-    <div id="modal" class="fixed inset-0 bg-black/90 hidden z-[300] flex items-center justify-center p-4 backdrop-blur-md">
-        <div class="bg-[#111] w-full max-w-md p-8 rounded-[2rem] relative border border-white/10">
-            <button onclick="closeModal()" class="absolute top-6 right-6 text-2xl text-gray-500">&times;</button>
-            <div id="modal-content"></div>
-        </div>
     </div>
 
     <script>
@@ -70,83 +65,113 @@
         const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
         let activeUser = null;
-        let allData = [];
+        let members = [];
 
         async function login() {
             const e = document.getElementById('l-email').value;
             const p = document.getElementById('l-pass').value;
             const { data } = await _supabase.from('network_members').select('*').eq('email', e).eq('password', p);
+            
             if(data && data.length > 0) {
                 activeUser = data[0];
-                startApp();
-            } else { alert("Invalid!"); }
+                document.getElementById('login-box').classList.add('hidden');
+                document.getElementById('tree-viewer').classList.remove('hidden');
+                document.getElementById('ui-actions').classList.remove('hidden');
+                refreshTree();
+            } else { alert("Invalid Credentials"); }
         }
 
-        function startApp() {
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('tree-viewer').classList.remove('hidden');
-            document.getElementById('ui-controls').classList.remove('hidden');
-            loadAndRenderTree();
-        }
-
-        async function loadAndRenderTree() {
+        async function refreshTree() {
             const { data } = await _supabase.from('network_members').select('*');
-            allData = data;
-            const rootContainer = document.getElementById('tree-root');
-            rootContainer.innerHTML = '';
-            
-            // Build the HTML Tree starting from activeUser
-            const treeHTML = `<ul>${renderNode(activeUser)}</ul>`;
-            rootContainer.innerHTML = treeHTML;
+            members = data;
+            const container = document.getElementById('tree-container');
+            container.innerHTML = `<ul>${renderNode(activeUser)}</ul>`;
         }
 
         function renderNode(user) {
-            const children = allData.filter(m => m.sponsor_id === user.associate_id);
+            // MATCHING LOGIC: Find people where I am their sponsor
+            // We check Sponsor Name AND Sponsor Phone matches my Name and Phone
+            const children = members.filter(m => 
+                m.sponsor_name === user.full_name && 
+                m.sponsor_phone === user.phone_no
+            );
+
             let html = `<li>
-                <div class="node-card ${user.id === activeUser.id ? 'active' : ''}" onclick='showDetails(${JSON.stringify(user)})'>
-                    <p class="text-[9px] text-blue-500 font-black uppercase mb-1">${user.level}</p>
-                    <p class="font-bold text-white text-sm">${user.full_name}</p>
-                    <p class="text-[8px] opacity-40 mt-1">${user.associate_id}</p>
+                <div class="node-card ${user.id === activeUser.id ? 'active-user' : ''}" onclick='showUser(${JSON.stringify(user)})'>
+                    <p class="text-[8px] font-black text-blue-500 uppercase">${user.level}</p>
+                    <p class="text-sm font-bold">${user.full_name}</p>
+                    <p class="text-[8px] opacity-30">${user.phone_no}</p>
                 </div>`;
-            
+
             if(children.length > 0) {
-                html += `<ul>`;
-                children.forEach(child => {
-                    html += renderNode(child);
-                });
-                html += `</ul>`;
+                html += `<ul>${children.map(c => renderNode(c)).join('')}</ul>`;
             }
             html += `</li>`;
             return html;
         }
 
-        function showDetails(user) {
-            const m = document.getElementById('modal');
-            const content = document.getElementById('modal-content');
-            content.innerHTML = `
-                <h2 class="text-2xl font-black mb-6">${user.full_name}</h2>
-                <div class="space-y-4 mb-8">
-                    ${detailItem("Email", user.email)}
-                    ${detailItem("Password", user.password)}
-                    ${detailItem("Associate ID", user.associate_id)}
+        function showUser(user) {
+            const inner = document.getElementById('modal-inner');
+            inner.innerHTML = `
+                <h2 class="text-2xl font-black mb-4">${user.full_name}</h2>
+                <div class="space-y-3 mb-6">
+                    ${row("Associate ID", user.associate_id)}
+                    ${row("Phone", user.phone_no)}
+                    ${row("Email", user.email)}
+                    ${row("Password", user.password)}
+                    ${row("Sponsor", user.sponsor_name)}
+                    ${row("Sponsor Phone", user.sponsor_phone || 'N/A')}
                 </div>
-                <div class="flex gap-4">
-                    <button class="bg-blue-600 flex-1 p-4 rounded-xl font-bold text-xs" onclick='alert("Add Member logic ready")'>+ ADD DOWNLINE</button>
-                    <button class="bg-white/5 flex-1 p-4 rounded-xl font-bold text-xs" onclick='closeModal()'>CLOSE</button>
+                <div class="flex gap-2">
+                    <button class="bg-blue-600 flex-1 p-3 rounded-xl font-bold text-xs" onclick="copy('${user.password}')">COPY PASSWORD</button>
+                    <button class="bg-white/10 flex-1 p-3 rounded-xl font-bold text-xs" onclick="closeModal()">CLOSE</button>
                 </div>
             `;
-            m.classList.remove('hidden');
+            document.getElementById('modal').classList.remove('hidden');
         }
 
-        function detailItem(l, v) {
-            return `<div class="bg-white/5 p-3 rounded-lg flex justify-between items-center">
-                <span class="text-[10px] text-gray-500 font-bold uppercase">${l}</span>
-                <span class="text-sm font-bold text-white">${v}</span>
-            </div>`;
+        function row(l, v) {
+            return `<div class="flex justify-between bg-white/5 p-3 rounded-xl"><span class="text-[10px] text-gray-500 uppercase">${l}</span><span class="text-sm font-bold">${v}</span></div>`;
         }
 
+        function openAddForm() {
+            const inner = document.getElementById('modal-inner');
+            inner.innerHTML = `
+                <h2 class="text-xl font-black mb-4">ADD NEW DOWNLINE</h2>
+                <div class="space-y-2">
+                    <input id="n-name" placeholder="Full Name" class="w-full bg-black p-3 rounded-xl border border-white/10">
+                    <input id="n-email" placeholder="Email" class="w-full bg-black p-3 rounded-xl border border-white/10">
+                    <input id="n-pass" placeholder="Password" class="w-full bg-black p-3 rounded-xl border border-white/10">
+                    <input id="n-phone" placeholder="Phone Number" class="w-full bg-black p-3 rounded-xl border border-white/10">
+                    <input id="n-assoc" placeholder="Associate ID" class="w-full bg-black p-3 rounded-xl border border-white/10">
+                    <p class="text-[10px] text-blue-500 mt-2 italic font-bold">Auto-Sponsor: ${activeUser.full_name}</p>
+                </div>
+                <button onclick="saveNew()" class="w-full bg-blue-600 p-4 rounded-xl font-black mt-4">CREATE CARD</button>
+            `;
+            document.getElementById('modal').classList.remove('hidden');
+        }
+
+        async function saveNew() {
+            const payload = {
+                full_name: document.getElementById('n-name').value,
+                email: document.getElementById('n-email').value,
+                password: document.getElementById('n-pass').value,
+                phone_no: document.getElementById('n-phone').value,
+                associate_id: document.getElementById('n-assoc').value,
+                sponsor_name: activeUser.full_name,     // Automatically your name
+                sponsor_phone: activeUser.phone_no,     // Automatically your phone
+                level: '25%'
+            };
+            
+            const { error } = await _supabase.from('network_members').insert([payload]);
+            if(!error) {
+                closeModal();
+                refreshTree();
+            } else { alert("Error saving data"); }
+        }
+
+        function copy(t) { navigator.clipboard.writeText(t); alert("Copied!"); }
         function closeModal() { document.getElementById('modal').classList.add('hidden'); }
-        function logout() { location.reload(); }
     </script>
 </body>
 </html>
